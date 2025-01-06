@@ -1,7 +1,7 @@
 import type { FC, ChangeEvent, FormEvent } from "react";
 import { useState } from "react";
 import { json } from "@remix-run/cloudflare";
-import { useActionData, Form, useNavigation, useLoaderData } from "@remix-run/react";
+import { useActionData, Form, useNavigation, useLoaderData, useTransition } from "@remix-run/react";
 import type { ActionFunction, LoaderFunction } from "@remix-run/cloudflare";
 import { createAppContext } from "../context";
 import { AppError } from "../utils/error";
@@ -69,8 +69,9 @@ const GenerateImage: FC = () => {
   const [numSteps, setNumSteps] = useState(config.FLUX_NUM_STEPS);
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
+    const transition = useTransition();
 
-  const isSubmitting = navigation.state === "submitting";
+  const isSubmitting = transition.state === "submitting";
 
   const handleEnhanceToggle = () => {
     setEnhance(!enhance);
@@ -99,10 +100,10 @@ const GenerateImage: FC = () => {
 
   //  修复了 handleSubmit 函数
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    if (isSubmitting) {
-        e.preventDefault(); // 阻止重复提交
-    }
-  }
+      e.preventDefault(); // 阻止默认提交
+    const formData = new FormData(e.currentTarget);
+    transition.submit(formData, { method: "post" });
+  };
 
   const handleModelChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setModel(e.target.value);
