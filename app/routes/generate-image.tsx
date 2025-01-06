@@ -5,41 +5,51 @@ import { useActionData, Form, useNavigation, useLoaderData } from "@remix-run/re
 import type { ActionFunction, LoaderFunction } from "@remix-run/cloudflare";
 import { createAppContext } from "../context";
 
+// Loader 函数用于在组件加载时获取初始数据
 export const loader: LoaderFunction = async ({ context }) => {
+  // 创建应用上下文，包含配置信息
   const appContext = createAppContext(context);
   const { config } = appContext;
+  // 从配置中提取模型信息，转换为 { id, path } 格式的数组
   const models = Object.entries(config.CUSTOMER_MODEL_MAP).map(([id, path]) => ({ id, path }));
+  // 返回模型信息和配置信息
   return json({ models, config });
 };
 
+// Action 函数用于处理表单提交
 export const action: ActionFunction = async ({ request, context }: { request: Request; context: any }) => {
+  // 创建应用上下文
   const appContext = createAppContext(context);
   const { imageGenerationService, config } = appContext;
 
   console.log("Generate image action started");
   console.log("Config:", JSON.stringify(config, null, 2));
 
+  // 获取表单数据
   const formData = await request.formData();
-  const prompt = formData.get("prompt") as string;
-  const enhance = formData.get("enhance") === "true";
-  const modelId = formData.get("model") as string;
-  const size = formData.get("size") as string;
-  const numSteps = parseInt(formData.get("numSteps") as string, 10);
+  const prompt = formData.get("prompt") as string; // 获取用户输入的提示词
+  const enhance = formData.get("enhance") === "true"; // 获取是否启用增强提示词
+  const modelId = formData.get("model") as string; // 获取选择的模型 ID
+  const size = formData.get("size") as string; // 获取选择的图片尺寸
+  const numSteps = parseInt(formData.get("numSteps") as string, 10); // 获取生成步骤数
 
   console.log("Form data:", { prompt, enhance, modelId, size, numSteps });
 
+  // 验证提示词是否为空
   if (!prompt) {
     return json({ error: "未找到提示词" }, { status: 400 });
   }
 
+  // 验证模型是否存在
   const model = config.CUSTOMER_MODEL_MAP[modelId];
   if (!model) {
     return json({ error: "无效的模型" }, { status: 400 });
   }
 
   try {
+    // 调用图片生成服务生成图片
     const result = await imageGenerationService.generateImage(
-      enhance ? `---tl ${prompt}` : prompt,
+      enhance ? `---tl ${prompt}` : prompt, // 如果启用增强，则在提示词前添加 ---tl
       model,
       size,
       numSteps
@@ -47,6 +57,7 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
     console.log("Image generation successful");
     return json(result);
   } catch (error) {
+    // 捕获生成图片过程中的错误
     console.error("生成图片时出错:", error);
     if (error instanceof AppError) {
       return json({ error: `生成图片失败: ${error.message}` }, { status: error.status || 500 });
@@ -55,22 +66,27 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
   }
 };
 
+// GenerateImage 组件
 const GenerateImage: FC = () => {
+  // 从 loader 中获取数据
   const { models, config } = useLoaderData<typeof loader>();
-  const [prompt, setPrompt] = useState("");
-  const [enhance, setEnhance] = useState(false);
-  const [model, setModel] = useState(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]);
-  const [size, setSize] = useState("1024x1024");
-  const [numSteps, setNumSteps] = useState(config.FLUX_NUM_STEPS);
-  const actionData = useActionData<typeof action>();
-  const navigation = useNavigation();
+  // 使用 useState 管理组件状态
+  const [prompt, setPrompt] = useState(""); // 用户输入的提示词
+  const [enhance, setEnhance] = useState(false); // 是否启用增强提示词
+  const [model, setModel] = useState(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]); // 选择的模型
+  const [size, setSize] = useState("1024x1024"); // 选择的图片尺寸
+  const [numSteps, setNumSteps] = useState(config.FLUX_NUM_STEPS); // 生成步骤数
+  const actionData = useActionData<typeof action>(); // 获取 action 函数返回的数据
+  const navigation = useNavigation(); // 获取导航状态
 
-  const isSubmitting = navigation.state === "submitting";
+  const isSubmitting = navigation.state === "submitting"; // 判断是否正在提交表单
 
+  // 切换增强提示词状态
   const handleEnhanceToggle = () => {
     setEnhance(!enhance);
   };
 
+  // 重置表单
   const handleReset = () => {
     setPrompt("");
     setEnhance(false);
@@ -79,16 +95,19 @@ const GenerateImage: FC = () => {
     setNumSteps(config.FLUX_NUM_STEPS);
   };
 
-  const handlePromptChange = (e: ChangeEvent<HTMLInputElement>) => {
+  // 处理提示词输入框内容变化
+  const handlePromptChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
   };
 
+  // 处理表单提交事件
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     if (isSubmitting) {
-      e.preventDefault();
+      e.preventDefault(); // 如果正在提交，则阻止默认的表单提交行为
     }
   };
 
+  // 处理模型选择变化
   const handleModelChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setModel(e.target.value);
   };
@@ -104,15 +123,16 @@ const GenerateImage: FC = () => {
             <label htmlFor="prompt" className="block text-white text-lg font-semibold mb-3">
               输入提示词：
             </label>
-            <input
-              type="text"
+            {/* 将 input 元素改为 textarea 元素，并添加 rows 属性使其可换行 */}
+            <textarea
               id="prompt"
               name="prompt"
               value={prompt}
               onChange={handlePromptChange}
-              className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 transition duration-300 ease-in-out hover:bg-opacity-30"
+              className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 transition duration-300 ease-in-out hover:bg-opacity-30 resize-none"
               placeholder="请输入您的提示词..."
               required
+              rows={4} // 设置默认显示 4 行
             />
           </div>
           <div>
