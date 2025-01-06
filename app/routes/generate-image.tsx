@@ -30,8 +30,11 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
   const prompt = formData.get("prompt") as string; // 获取用户输入的提示词
   const enhance = formData.get("enhance") === "true"; // 获取是否启用增强提示词
   const modelId = formData.get("model") as string; // 获取选择的模型 ID
-  const size = formData.get("size") as string; // 获取选择的图片尺寸
+    const width = formData.get("width") as string; // 获取用户输入的宽度
+    const height = formData.get("height") as string; // 获取用户输入的高度
   const numSteps = parseInt(formData.get("numSteps") as string, 10); // 获取生成步骤数
+
+    const size = `${width}x${height}`; // 拼接尺寸字符串
 
   console.log("Form data:", { prompt, enhance, modelId, size, numSteps });
 
@@ -74,7 +77,8 @@ const GenerateImage: FC = () => {
   const [prompt, setPrompt] = useState(""); // 用户输入的提示词
   const [enhance, setEnhance] = useState(false); // 是否启用增强提示词
   const [model, setModel] = useState(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]); // 选择的模型
-  const [size, setSize] = useState("1024x1024"); // 选择的图片尺寸
+    const [width, setWidth] = useState("1024"); // 图片宽度
+    const [height, setHeight] = useState("1024"); // 图片高度
   const [numSteps, setNumSteps] = useState(config.FLUX_NUM_STEPS); // 生成步骤数
   const actionData = useActionData<typeof action>(); // 获取 action 函数返回的数据
   const navigation = useNavigation(); // 获取导航状态
@@ -91,7 +95,8 @@ const GenerateImage: FC = () => {
     setPrompt("");
     setEnhance(false);
     setModel(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]);
-    setSize("1024x1024");
+      setWidth("1024");
+      setHeight("1024");
     setNumSteps(config.FLUX_NUM_STEPS);
   };
 
@@ -111,6 +116,16 @@ const GenerateImage: FC = () => {
   const handleModelChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setModel(e.target.value);
   };
+
+    // 处理宽度输入变化
+    const handleWidthChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setWidth(e.target.value);
+    };
+
+    // 处理高度输入变化
+    const handleHeightChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setHeight(e.target.value);
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 px-4">
@@ -153,22 +168,34 @@ const GenerateImage: FC = () => {
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="size" className="block text-white text-lg font-semibold mb-3">
-              图片尺寸：
-            </label>
-            <select
-              id="size"
-              name="size"
-              value={size}
-              onChange={(e) => setSize(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
-            >
-              <option value="512x512">512x512</option>
-              <option value="768x768">768x768</option>
-              <option value="1024x1024">1024x1024</option>
-            </select>
-          </div>
+            <div className="flex space-x-4">
+                <div className="flex-1">
+                    <label htmlFor="width" className="block text-white text-lg font-semibold mb-3">
+                        宽度：
+                    </label>
+                    <input
+                        type="number"
+                        id="width"
+                        name="width"
+                        value={width}
+                        onChange={handleWidthChange}
+                        className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
+                    />
+                </div>
+                <div className="flex-1">
+                    <label htmlFor="height" className="block text-white text-lg font-semibold mb-3">
+                        高度：
+                    </label>
+                    <input
+                        type="number"
+                        id="height"
+                        name="height"
+                        value={height}
+                        onChange={handleHeightChange}
+                        className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
+                    />
+                </div>
+            </div>
           <div>
             <label htmlFor="numSteps" className="block text-white text-lg font-semibold mb-3">
               生成步数：
