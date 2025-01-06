@@ -4,6 +4,7 @@ import { json } from "@remix-run/cloudflare";
 import { useActionData, Form, useNavigation, useLoaderData } from "@remix-run/react";
 import type { ActionFunction, LoaderFunction } from "@remix-run/cloudflare";
 import { createAppContext } from "../context";
+import { AppError } from "../utils/error";
 
 export const loader: LoaderFunction = async ({ context }) => {
   const appContext = createAppContext(context);
@@ -23,10 +24,11 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
   const prompt = formData.get("prompt") as string;
   const enhance = formData.get("enhance") === "true";
   const modelId = formData.get("model") as string;
-  const size = formData.get("size") as string;
+  const width = formData.get("width") as string;
+    const height = formData.get("height") as string;
   const numSteps = parseInt(formData.get("numSteps") as string, 10);
 
-  console.log("Form data:", { prompt, enhance, modelId, size, numSteps });
+  console.log("Form data:", { prompt, enhance, modelId, width, height, numSteps });
 
   if (!prompt) {
     return json({ error: "未找到提示词" }, { status: 400 });
@@ -36,6 +38,8 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
   if (!model) {
     return json({ error: "无效的模型" }, { status: 400 });
   }
+
+    const size = `${width}x${height}`;
 
   try {
     const result = await imageGenerationService.generateImage(
@@ -60,7 +64,8 @@ const GenerateImage: FC = () => {
   const [prompt, setPrompt] = useState("");
   const [enhance, setEnhance] = useState(false);
   const [model, setModel] = useState(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]);
-  const [size, setSize] = useState("1024x1024");
+  const [width, setWidth] = useState("1024");
+  const [height, setHeight] = useState("1024");
   const [numSteps, setNumSteps] = useState(config.FLUX_NUM_STEPS);
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -71,15 +76,24 @@ const GenerateImage: FC = () => {
     setEnhance(!enhance);
   };
 
+    const handleWidthChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setWidth(e.target.value);
+    };
+
+    const handleHeightChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setHeight(e.target.value);
+    };
+
   const handleReset = () => {
     setPrompt("");
     setEnhance(false);
     setModel(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]);
-    setSize("1024x1024");
+    setWidth("1024");
+        setHeight("1024");
     setNumSteps(config.FLUX_NUM_STEPS);
   };
 
-  const handlePromptChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handlePromptChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
   };
 
@@ -95,26 +109,26 @@ const GenerateImage: FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 px-4">
-      <div className="relative bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl shadow-2xl p-10 max-w-md w-full">
+      <div className="relative bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl shadow-2xl p-10 max-w-2xl w-full">
         <h1 className="text-4xl font-extrabold text-white mb-8 text-center drop-shadow-lg">
           白嫖 CF 的 Flux 生成图片
         </h1>
         <Form method="post" className="space-y-8" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="prompt" className="block text-white text-lg font-semibold mb-3">
-              输入提示词：
-            </label>
-            <input
-              type="text"
-              id="prompt"
-              name="prompt"
-              value={prompt}
-              onChange={handlePromptChange}
-              className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 transition duration-300 ease-in-out hover:bg-opacity-30"
-              placeholder="请输入您的提示词..."
-              required
-            />
-          </div>
+           <div>
+              <label htmlFor="prompt" className="block text-white text-lg font-semibold mb-3">
+                输入提示词：
+              </label>
+              <textarea
+                id="prompt"
+                name="prompt"
+                value={prompt}
+                onChange={handlePromptChange}
+                rows={4}
+                className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 transition duration-300 ease-in-out hover:bg-opacity-30 resize-vertical"
+                placeholder="请输入您的提示词..."
+                required
+              />
+            </div>
           <div>
             <label htmlFor="model" className="block text-white text-lg font-semibold mb-3">
               选择模型：
@@ -133,22 +147,34 @@ const GenerateImage: FC = () => {
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="size" className="block text-white text-lg font-semibold mb-3">
-              图片尺寸：
-            </label>
-            <select
-              id="size"
-              name="size"
-              value={size}
-              onChange={(e) => setSize(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
-            >
-              <option value="512x512">512x512</option>
-              <option value="768x768">768x768</option>
-              <option value="1024x1024">1024x1024</option>
-            </select>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label htmlFor="width" className="block text-white text-lg font-semibold mb-3">
+                        宽度：
+                    </label>
+                    <input
+                        type="number"
+                        id="width"
+                        name="width"
+                        value={width}
+                        onChange={handleWidthChange}
+                        className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
+                    />
+                </div>
+                <div>
+                    <label htmlFor="height" className="block text-white text-lg font-semibold mb-3">
+                        高度：
+                    </label>
+                    <input
+                        type="number"
+                        id="height"
+                        name="height"
+                        value={height}
+                        onChange={handleHeightChange}
+                        className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
+                    />
+                </div>
+            </div>
           <div>
             <label htmlFor="numSteps" className="block text-white text-lg font-semibold mb-3">
               生成步数：
