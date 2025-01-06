@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
   const enhance = formData.get("enhance") === "true";
   const modelId = formData.get("model") as string;
   const width = formData.get("width") as string;
-    const height = formData.get("height") as string;
+  const height = formData.get("height") as string;
   const numSteps = parseInt(formData.get("numSteps") as string, 10);
 
   console.log("Form data:", { prompt, enhance, modelId, width, height, numSteps });
@@ -39,7 +39,7 @@ export const action: ActionFunction = async ({ request, context }: { request: Re
     return json({ error: "无效的模型" }, { status: 400 });
   }
 
-    const size = `${width}x${height}`;
+  const size = `${width}x${height}`;
 
   try {
     const result = await imageGenerationService.generateImage(
@@ -76,20 +76,20 @@ const GenerateImage: FC = () => {
     setEnhance(!enhance);
   };
 
-    const handleWidthChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setWidth(e.target.value);
-    };
+  const handleWidthChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setWidth(e.target.value);
+  };
 
-    const handleHeightChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setHeight(e.target.value);
-    };
+  const handleHeightChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setHeight(e.target.value);
+  };
 
   const handleReset = () => {
     setPrompt("");
     setEnhance(false);
     setModel(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]);
     setWidth("1024");
-        setHeight("1024");
+    setHeight("1024");
     setNumSteps(config.FLUX_NUM_STEPS);
   };
 
@@ -97,11 +97,12 @@ const GenerateImage: FC = () => {
     setPrompt(e.target.value);
   };
 
+  //  修复了 handleSubmit 函数
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     if (isSubmitting) {
-      e.preventDefault();
+        e.preventDefault(); // 阻止重复提交
     }
-  };
+  }
 
   const handleModelChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setModel(e.target.value);
@@ -114,21 +115,21 @@ const GenerateImage: FC = () => {
           白嫖 CF 的 Flux 生成图片
         </h1>
         <Form method="post" className="space-y-8" onSubmit={handleSubmit}>
-           <div>
-              <label htmlFor="prompt" className="block text-white text-lg font-semibold mb-3">
-                输入提示词：
-              </label>
-              <textarea
-                id="prompt"
-                name="prompt"
-                value={prompt}
-                onChange={handlePromptChange}
-                rows={4}
-                className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 transition duration-300 ease-in-out hover:bg-opacity-30 resize-vertical"
-                placeholder="请输入您的提示词..."
-                required
-              />
-            </div>
+          <div>
+            <label htmlFor="prompt" className="block text-white text-lg font-semibold mb-3">
+              输入提示词：
+            </label>
+            <textarea
+              id="prompt"
+              name="prompt"
+              value={prompt}
+              onChange={handlePromptChange}
+              rows={4}
+              className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 transition duration-300 ease-in-out hover:bg-opacity-30 resize-vertical"
+              placeholder="请输入您的提示词..."
+              required
+            />
+          </div>
           <div>
             <label htmlFor="model" className="block text-white text-lg font-semibold mb-3">
               选择模型：
@@ -147,34 +148,34 @@ const GenerateImage: FC = () => {
               ))}
             </select>
           </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label htmlFor="width" className="block text-white text-lg font-semibold mb-3">
-                        宽度：
-                    </label>
-                    <input
-                        type="number"
-                        id="width"
-                        name="width"
-                        value={width}
-                        onChange={handleWidthChange}
-                        className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
-                    />
-                </div>
-                <div>
-                    <label htmlFor="height" className="block text-white text-lg font-semibold mb-3">
-                        高度：
-                    </label>
-                    <input
-                        type="number"
-                        id="height"
-                        name="height"
-                        value={height}
-                        onChange={handleHeightChange}
-                        className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
-                    />
-                </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="width" className="block text-white text-lg font-semibold mb-3">
+                宽度：
+              </label>
+              <input
+                type="number"
+                id="width"
+                name="width"
+                value={width}
+                onChange={handleWidthChange}
+                className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
+              />
             </div>
+            <div>
+              <label htmlFor="height" className="block text-white text-lg font-semibold mb-3">
+                高度：
+              </label>
+              <input
+                type="number"
+                id="height"
+                name="height"
+                value={height}
+                onChange={handleHeightChange}
+                className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
+              />
+            </div>
+          </div>
           <div>
             <label htmlFor="numSteps" className="block text-white text-lg font-semibold mb-3">
               生成步数：
