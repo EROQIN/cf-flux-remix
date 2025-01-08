@@ -79,7 +79,7 @@ const GenerateImage: FC = () => {
   const [model, setModel] = useState(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]); // 选择的模型
     const [width, setWidth] = useState("1024"); // 图片宽度
     const [height, setHeight] = useState("1024"); // 图片高度
-  const [numSteps, setNumSteps] = useState(config.FLUX_NUM_STEPS); // 生成步骤数
+  const [numSteps, setNumSteps] = useState(8); // 生成步骤数，默认值设置为8
   const actionData = useActionData<typeof action>(); // 获取 action 函数返回的数据
   const navigation = useNavigation(); // 获取导航状态
 
@@ -97,7 +97,7 @@ const GenerateImage: FC = () => {
     setModel(config.CUSTOMER_MODEL_MAP["FLUX.1-Schnell-CF"]);
       setWidth("1024");
       setHeight("1024");
-    setNumSteps(config.FLUX_NUM_STEPS);
+    setNumSteps(8); // 重置时，将步骤数设置为 8
   };
 
   // 处理提示词输入框内容变化
@@ -206,8 +206,7 @@ const GenerateImage: FC = () => {
               name="numSteps"
               value={numSteps}
               onChange={(e) => setNumSteps(parseInt(e.target.value, 10))}
-              min="4"
-              max="8"
+              min="1" // 去除了最小值为4的限制
               className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
             />
           </div>
